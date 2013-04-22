@@ -85,12 +85,12 @@ end
 ## when called from chef. The setsid command forces the subprocess into a state
 ## where it can daemonize properly. -Kevin (thanks to Daniel DeLeo for the help)
 service node['rabbitmq']['service_name'] do
-  #start_command 'setsid /etc/init.d/rabbitmq-server start'
-  #stop_command 'setsid /etc/init.d/rabbitmq-server stop'
-  #restart_command 'setsid /etc/init.d/rabbitmq-server restart'
-  #status_command 'setsid /etc/init.d/rabbitmq-server status'
+  #start_command 'rabbitmq-server start'
+  #stop_command 'rabbitmq-server stop'
+  #restart_command 'rabbitmq-server restart'
+  #status_command 'rabbitmq-server status'
   supports :status => true, :restart => true
-  action [ :enable ]
+  action [ :enable, :stop ]
   not_if { platform?('smartos') }
 end
 
@@ -133,12 +133,14 @@ template "#{node['rabbitmq']['config_root']}/rabbitmq.config" do
 end
 
 # Reset the node so that it will join the cluster
-bash "Reset node" do
-  user "root"
-  code <<-EOH
-  rabbitmqctl stop_app
-  rabbitmqctl reset
-  rabbitmqctl stop
-  service rabbitmq-server restart
-  EOH
+if node['rabbitmq']['cluster']
+  bash "Reset node" do
+    user "root"
+    code <<-EOH
+    rabbitmqctl stop_app
+    rabbitmqctl reset
+    rabbitmqctl stop
+    service rabbitmq-server restart
+    EOH
+  end
 end
