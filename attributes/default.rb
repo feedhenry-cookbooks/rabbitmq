@@ -27,6 +27,10 @@ default['rabbitmq']['default_pass'] = 'guest'
 default['rabbitmq']['cluster'] = false
 default['rabbitmq']['cluster_disk_nodes'] = []
 default['rabbitmq']['erlang_cookie'] = 'AnyAlphaNumericStringWillDo'
+default['rabbitmq_setup_items'] = []
+#the port range used by erlang distributed node protocol
+default['rabbitmq']['inet_dist_listen_min'] = nil
+default['rabbitmq']['inet_dist_listen_max'] = nil
 
 # resource usage
 default['rabbitmq']['disk_free_limit_relative'] = nil

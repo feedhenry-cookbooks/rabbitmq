@@ -9,6 +9,7 @@ recipe            "rabbitmq::cluster", "Set up RabbitMQ clustering."
 recipe            "rabbitmq::plugin_management", "Manage plugins with node attributes"
 recipe            "rabbitmq::virtualhost_management", "Manage virtualhost with node attributes"
 recipe            "rabbitmq::user_management", "Manage users with node attributes"
+recipe            "rabbitmq::user_setup", "Setup RabbitMQ Vhosts, Users and Permissions"
 depends           "erlang", ">= 0.9"
 
 %w{ubuntu debian linuxmint redhat centos scientific amazon fedora oracle smartos}.each do |os|

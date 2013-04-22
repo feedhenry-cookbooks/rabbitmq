@@ -13,6 +13,27 @@ This release was tested with:
 * Ubuntu 10.04: 3.0.4 (distro release unsupported)
 * Ubuntu 12.04: 3.0.4/2.7.1
 
+Attributes
+==========
+This cookbook also defines the following attribute for RabbitMQ:
+
+    node[:rabbitmq_setup_items] = []
+
+Override this in a role, and include a list of items from the `rabbitmq` data bag. These will define the vhosts, users, and permissions that get created in RabbitMQ. (Read the recipe info below for an example).
+
+The Opscode rabbitmq cookbooks use the attributes defined by the Opscode cookbook. Specifically, information for clustering should be provided. So, you may include something like the following in a Role:
+
+    override_attributes(
+      "rabbitmq" => {
+        "cluster" => "yes",
+        "erlang_cookie" => "REPLACETHISWITHYOUROWN",
+        "cluster_disk_nodes" => ['rabbit@rabbit1', 'rabbit@rabbit2']  
+      },
+      "rabbitmq_setup_items" => ['rabbit1_permissions', 'rabbit2_permissions']
+    )
+
+Note that the elements of `cluster_disk_nodes` are Chef node names. Each of these nodes must also have entries in `/etc/hosts` (see the [chef-hosts](https://github.com/coroutine/chef-hosts) cookbook).
+
 Recipes
 =======
 default
@@ -22,6 +43,50 @@ Installs `rabbitmq-server` from RabbitMQ.com via direct download of the installa
 The cluster recipe is now combined with the default and will now auto-cluster. Set the `['rabbitmq']['cluster']` attribute to `true`, `['rabbitmq']['cluster_disk_nodes']` array of `node@host` strings that describe which you want to be disk nodes and then set an alphanumeric string for the `erlang_cookie`.
 
 To enable SSL turn `ssl` to `true` and set the paths to your cacert, cert and key files.
+
+This recipe needs to be run on every node inside a cluster.
+
+setup
+-------
+This recipe creates users, vhosts, and sets permissions for RabbitMQ. It reads data from the `rabbitmq` data bag. Each item in the data bag should define `vhosts`, `users` and any permissions a user should have for each `vhost`. 
+
+Additionally, you can specify a `guest_password` which will change the password for the default `guest` account, OR you can set `delete_guest` to `true` and the default account will be removed.
+
+An item in the `rabbitmq` data bag (`example_item.json`) would look something like this:
+
+    {
+        "id": "example_item",
+        "delete_guest": true,
+        "guest_password": "",
+        "vhosts": [
+            "/sample_vhost"
+        ],
+        "users": [
+            {
+                "name":"user_one",
+                "password":"secret-thing-here",
+                "permissions": [
+                    {
+                        "vhost":"/sample_vhost",
+                        "permissions":"\".*\" \".*\" \".*\""
+                    }
+                ]
+            }
+        ]
+    }
+
+Then, to apply this data to a node, you would create a role (e.g. `rabbitmq_setup`) that looked something like the following:
+
+    name "rabbitmq_setup"
+    description "Vhost and User config for RabbitMQ"
+    run_list(
+      "recipe[rabbitmq_cluster::setup]"
+    )
+    default_attributes(
+      "rabbitmq_setup_items" => ['example_item', ]
+    )
+
+This recipe only needs to be run once inside a cluster and should run after the cluster is setup.
 
 Resources/Providers
 ===================
